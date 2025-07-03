@@ -738,9 +738,10 @@ const welcomeScreenHTML = `
         <button class="chat-submit" title="Send message">➤</button>
   </div>
 
-  <!-- Bottom row: 🎤 voice + 🗣️ realtime mode -->
-  <div class="chat-button-area">
-    <button class="chat-voice-message-btn" title="Record voice message">🎤</button>
+  <!-- Bottom row: 🎤 voice + 🗣️ realtime mode + 🛑 stop -->
+<div class="chat-button-area">
+  <button class="chat-voice-message-btn" title="Record voice message">🎙️</button>
+  <button id="stopRecordingBtn" disabled style="margin-left: 5px;">🛑</button>
     <button class="chat-stream-mode-btn" title="Start voice mode">🗣️</button>
   </div>
   
@@ -779,9 +780,12 @@ const streamModeBtn = chatWindow.querySelector('.chat-stream-mode-btn');
 let mediaRecorder;
 let recordedChunks = [];
 
+const voiceMessageBtn = document.getElementById("voiceMessageBtn");
+const stopRecordingBtn = document.getElementById("stopRecordingBtn");
+
 voiceMessageBtn.addEventListener('click', async () => {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert('🎤 Microphone not supported in this browser.');
+    alert(`🎤 Microphone not supported in this browser.`);
     return;
   }
 
@@ -790,6 +794,7 @@ voiceMessageBtn.addEventListener('click', async () => {
     recordedChunks = [];
 
     mediaRecorder = new MediaRecorder(stream);
+
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) recordedChunks.push(e.data);
     };
@@ -797,19 +802,29 @@ voiceMessageBtn.addEventListener('click', async () => {
     mediaRecorder.onstop = () => {
       const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
       sendVoiceMessage(audioBlob);
+      stopRecordingBtn.disabled = true;
+      voiceMessageBtn.disabled = false;
     };
 
     mediaRecorder.start();
 
-    // Simple UX control: auto stop after 10 sec
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 10000); // or use button to stop later
+    mediaRecorder.onstart = () => {
+  console.log("🎙️ Recording started...");
+};
 
-    alert("🎙️ Recording started! Auto stop in 10 sec...");
+    alert("🎙️ Recording started. Click Stop to end.");
+    stopRecordingBtn.disabled = false;
+    voiceMessageBtn.disabled = true;
+
   } catch (err) {
     alert("⚠️ Failed to access microphone.");
     console.error(err);
+  }
+});
+
+stopRecordingBtn.addEventListener('click', () => {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
   }
 });
 
