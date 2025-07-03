@@ -817,43 +817,73 @@ streamModeBtn.addEventListener('click', () => {
     alert('🗣️ Real-time voice mode clicked! (live streaming coming soon)');
 });
 
+    function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
     // Define sendVoiceMessage below all event listeners
 function sendVoiceMessage(audioBlob) {
-  const formData = new FormData();
+  // Convert blob to base64
+blobToBase64(audioBlob).then(base64Audio => {
+  const payload = {
+    messaging_product: "widget",
+    metadata: {
+      userId: email,
+      userName: name,
+      userEmail: userEmail
+    },
+    contacts: [
+      {
+        profile: { name: name },
+        wa_id: email
+      }
+    ],
+    messages: [
+      {
+        from: email,
+        timestamp: Date.now().toString(),
+        type: "audio",
+        audio: {
+          mime_type: "audio/webm",
+          filename: "voice-message.webm",
+          voice: true,
+          base64: base64Audio
+        }
+      }
+    ],
+    route: settings.webhook.route,
+    sessionId: conversationId,
+    message_type: "voice"
+  };
 
-  // Attach audio file
-  formData.append("file", audioBlob, "voice-message.webm");
-
-  // Add the same values your text chat sends
-  formData.append("userId", email);
-  formData.append("userName", name);
-  formData.append("userEmail", userEmail);
-  formData.append("sessionId", conversationId); // or conversationId/sessionId depending on your backend
-  formData.append("route", settings.webhook.route); // optional, if you use dynamic routes
-  formData.append("message_type", "voice"); // 🔥 critical for Switch node
-
-  // Send to same webhook as text chat
   fetch(settings.webhook.url, {
-    method: 'POST',
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log('✅ Voice message sent:', data);
-    const botMessage = document.createElement('div');
-    botMessage.className = 'chat-bubble bot-bubble';
-    botMessage.textContent = '🎤 Voice message uploaded!';
-    messagesContainer.appendChild(botMessage);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  })
-  .catch(err => {
-    console.error('❌ Upload failed:', err);
-    const botMessage = document.createElement('div');
-    botMessage.className = 'chat-bubble bot-bubble';
-    botMessage.textContent = '⚠️ Voice upload failed.';
-    messagesContainer.appendChild(botMessage);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(payload)
+})
+.then(res => res.json())
+.then(data => {
+  console.log("✅ Voice message sent:", data);
+  const botMessage = document.createElement('div');
+  botMessage.className = 'chat-bubble bot-bubble';
+  botMessage.textContent = '🎤 Voice message uploaded!';
+  messagesContainer.appendChild(botMessage);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+})
+.catch(err => {
+  console.error("❌ Upload failed:", err);
+  const botMessage = document.createElement('div');
+  botMessage.className = 'chat-bubble bot-bubble';
+  botMessage.textContent = '⚠️ Voice upload failed.';
+  messagesContainer.appendChild(botMessage);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+});
 }
     
     // Registration form elements
