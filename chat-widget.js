@@ -839,13 +839,22 @@ function sendVoiceMessage(audioBlob) {
   })
   .then(res => res.json())
   .then(data => {
-    console.log('✅ Voice message sent:', data);
-    const botMessage = document.createElement('div');
-    botMessage.className = 'chat-bubble bot-bubble';
-    botMessage.textContent = '🎤 Voice message uploaded!';
-    messagesContainer.appendChild(botMessage);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  })
+  console.log('✅ Voice message sent:', data);
+  const botMessage = document.createElement('div');
+  botMessage.className = 'chat-bubble bot-bubble';
+
+  if (data.voice_url) {
+    botMessage.innerHTML = `
+      <p>🎤 Voice reply:</p>
+      <audio controls src="${data.voice_url}" style="width: 100%; margin-top: 5px;"></audio>
+    `;
+  } else {
+    botMessage.textContent = '✅ Voice message uploaded!';
+  }
+
+  messagesContainer.appendChild(botMessage);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+})
   .catch(err => {
     console.error('❌ Upload failed:', err);
     const botMessage = document.createElement('div');
