@@ -780,12 +780,9 @@ const streamModeBtn = chatWindow.querySelector('.chat-stream-mode-btn');
 let mediaRecorder;
 let recordedChunks = [];
 
-const voiceMessageBtn = document.getElementById("voiceMessageBtn");
-const stopRecordingBtn = document.getElementById("stopRecordingBtn");
-
 voiceMessageBtn.addEventListener('click', async () => {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert(`🎤 Microphone not supported in this browser.`);
+    alert('🎤 Microphone not supported in this browser.');
     return;
   }
 
@@ -802,29 +799,22 @@ voiceMessageBtn.addEventListener('click', async () => {
     mediaRecorder.onstop = () => {
       const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
       sendVoiceMessage(audioBlob);
-      stopRecordingBtn.disabled = true;
-      voiceMessageBtn.disabled = false;
     };
 
     mediaRecorder.start();
 
-    mediaRecorder.onstart = () => {
-  console.log("🎙️ Recording started...");
-};
+    // Optional: notify user
+    alert("🎙️ Voice recording started. It'll stop after 30 seconds.");
 
-    alert("🎙️ Recording started. Click Stop to end.");
-    stopRecordingBtn.disabled = false;
-    voiceMessageBtn.disabled = true;
+    setTimeout(() => {
+      if (mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }, 30000); // Stop after 30 seconds (or you can make this manual later)
 
   } catch (err) {
-    alert("⚠️ Failed to access microphone.");
+    alert("⚠️ Microphone access denied or failed.");
     console.error(err);
-  }
-});
-
-stopRecordingBtn.addEventListener('click', () => {
-  if (mediaRecorder && mediaRecorder.state === "recording") {
-    mediaRecorder.stop();
   }
 });
 
