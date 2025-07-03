@@ -825,6 +825,9 @@ function sendVoiceMessage(audioBlob) {
   formData.append("file", audioBlob, "voice-message.webm");
 
   // Add the same values your text chat sends
+  formData.append("userId", email);            // or get from your app context
+  formData.append("userName", name);           // same, from session
+  formData.append("userEmail", userEmail);     // if available
   formData.append("sessionId", conversationId); // or conversationId/sessionId depending on your backend
   formData.append("route", settings.webhook.route); // optional, if you use dynamic routes
   formData.append("message_type", "voice"); // 🔥 critical for Switch node
