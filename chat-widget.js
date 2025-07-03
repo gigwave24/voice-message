@@ -776,13 +776,76 @@ const welcomeScreenHTML = `
     const voiceMessageBtn = chatWindow.querySelector('.chat-voice-message-btn');
 const streamModeBtn = chatWindow.querySelector('.chat-stream-mode-btn');
 
-voiceMessageBtn.addEventListener('click', () => {
-    alert('🎤 Voice message button clicked! (recording coming soon)');
+let mediaRecorder;
+let recordedChunks = [];
+
+voiceMessageBtn.addEventListener('click', async () => {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('🎤 Microphone not supported in this browser.');
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+      sendVoiceMessage(audioBlob);
+    };
+
+    mediaRecorder.start();
+
+    // Simple UX control: auto stop after 10 sec
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 10000); // or use button to stop later
+
+    alert("🎙️ Recording started! Auto stop in 10 sec...");
+  } catch (err) {
+    alert("⚠️ Failed to access microphone.");
+    console.error(err);
+  }
 });
 
 streamModeBtn.addEventListener('click', () => {
     alert('🗣️ Real-time voice mode clicked! (live streaming coming soon)');
 });
+
+    // Define sendVoiceMessage below all event listeners
+function sendVoiceMessage(audioBlob) {
+  const formData = new FormData();
+  formData.append("file", audioBlob, "voice-message.webm");
+  formData.append("sessionId", conversationId);
+  formData.append("route", settings.webhook.route);
+
+  fetch(settings.webhook.url, {
+    method: 'POST',
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log("✅ Voice message sent:", data);
+      const botMessage = document.createElement('div');
+      botMessage.className = 'chat-bubble bot-bubble';
+      botMessage.textContent = "🎤 Voice message sent!";
+      messagesContainer.appendChild(botMessage);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    })
+    .catch(err => {
+      console.error("❌ Upload failed:", err);
+      const botMessage = document.createElement('div');
+      botMessage.className = 'chat-bubble bot-bubble';
+      botMessage.textContent = "⚠️ Voice upload failed.";
+      messagesContainer.appendChild(botMessage);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+}
     
     // Registration form elements
     const registrationForm = chatWindow.querySelector('.registration-form');
