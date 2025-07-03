@@ -820,31 +820,37 @@ streamModeBtn.addEventListener('click', () => {
     // Define sendVoiceMessage below all event listeners
 function sendVoiceMessage(audioBlob) {
   const formData = new FormData();
-  formData.append("file", audioBlob, "voice-message.webm");
-  formData.append("sessionId", conversationId);
-  formData.append("route", settings.webhook.route);
 
+  // Attach audio file
+  formData.append("file", audioBlob, "voice-message.webm");
+
+  // Add the same values your text chat sends
+  formData.append("sessionId", conversationId); // or conversationId/sessionId depending on your backend
+  formData.append("route", settings.webhook.route); // optional, if you use dynamic routes
+  formData.append("message_type", "voice"); // 🔥 critical for Switch node
+
+  // Send to same webhook as text chat
   fetch(settings.webhook.url, {
     method: 'POST',
     body: formData
   })
-    .then(res => res.json())
-    .then(data => {
-      console.log("✅ Voice message sent:", data);
-      const botMessage = document.createElement('div');
-      botMessage.className = 'chat-bubble bot-bubble';
-      botMessage.textContent = "🎤 Voice message sent!";
-      messagesContainer.appendChild(botMessage);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    })
-    .catch(err => {
-      console.error("❌ Upload failed:", err);
-      const botMessage = document.createElement('div');
-      botMessage.className = 'chat-bubble bot-bubble';
-      botMessage.textContent = "⚠️ Voice upload failed.";
-      messagesContainer.appendChild(botMessage);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
+  .then(res => res.json())
+  .then(data => {
+    console.log('✅ Voice message sent:', data);
+    const botMessage = document.createElement('div');
+    botMessage.className = 'chat-bubble bot-bubble';
+    botMessage.textContent = '🎤 Voice message uploaded!';
+    messagesContainer.appendChild(botMessage);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  })
+  .catch(err => {
+    console.error('❌ Upload failed:', err);
+    const botMessage = document.createElement('div');
+    botMessage.className = 'chat-bubble bot-bubble';
+    botMessage.textContent = '⚠️ Voice upload failed.';
+    messagesContainer.appendChild(botMessage);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  });
 }
     
     // Registration form elements
@@ -973,6 +979,7 @@ function sendVoiceMessage(audioBlob) {
                 sessionId: conversationId,
                 route: settings.webhook.route,
                 chatInput: userInfoMessage,
+                message_type: "text", // ✅ Add here for n8n Switch
                 metadata: {
                     userId: email,
                     userName: name,
