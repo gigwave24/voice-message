@@ -738,10 +738,9 @@ const welcomeScreenHTML = `
         <button class="chat-submit" title="Send message">➤</button>
   </div>
 
-  <!-- Bottom row: 🎤 voice + 🗣️ realtime mode + 🛑 stop -->
+  <!-- Bottom row: 🎤 voice + 🗣️ realtime mode -->
 <div class="chat-button-area">
   <button class="chat-voice-message-btn" title="Record voice message">🎙️</button>
-  <button id="stopRecordingBtn" disabled style="margin-left: 5px;">🛑</button>
     <button class="chat-stream-mode-btn" title="Start voice mode">🗣️</button>
   </div>
   
